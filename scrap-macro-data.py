@@ -7,6 +7,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import StaleElementReferenceException
 import pandas as pd
 
 
@@ -101,11 +102,16 @@ def get_interbankrate(datelist):
                 gobutton = BROWSER.find_element_by_css_selector(
                     r'#T\:oc_5531706273region\:cb1')
                 gobutton.click()
-                time.sleep(5)
+                time.sleep(10)
                 gobutton.click() #Click twice, just to be sure
-            except:
-                BROWSER.get(interbank_rate_url)
-                time.sleep(1)
+            except StaleElementReferenceException as e:
+                print("Found a stale element, move on...")
+                time.sleep(10)
+                break
+            except Exception as e:
+                print(e)
+                BROWSER.refresh()
+                # BROWSER.get(interbank_rate_url)
                 continue
             break
         # Wait until listings show up
@@ -113,7 +119,7 @@ def get_interbankrate(datelist):
         while days_perpage == 0:
             time.sleep(5)
             days_perpage = len(BROWSER.find_elements_by_css_selector('.x10m'))
-        print(days_perpage, 'found')
+            print(days_perpage, 'found')
         # Go over each link and scrap for data inside
         for i in range(days_perpage):
             info = {}
@@ -169,17 +175,19 @@ def get_centralrate(datelist):
                 gobutton.click()
                 time.sleep(5)
                 gobutton.click() #Click twice, just to be sure
-            except:
-                BROWSER.get(central_rate_url)
-                time.sleep(1)
-                continue
+            except Exception as e:
+                print(e)
+                BROWSER.refresh()
+                # BROWSER.get(central_rate_url)
+                time.sleep(10)
+                break
             break
         # Wait until listings show up
         days_perpage = 0
         while days_perpage == 0:
             time.sleep(5)
             days_perpage = len(BROWSER.find_elements_by_css_selector('.af_table_data-row'))
-        print(days_perpage, 'found')
+            print(days_perpage, 'found')
         # Go over each link and scrap for data inside
         for i in range(days_perpage):
             info = {}
